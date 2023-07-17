@@ -68,9 +68,10 @@ void WriteBarrier::MarkingSlow(InstructionStream host, RelocInfo* reloc_info,
   marking_barrier->Write(host, reloc_info, value);
 }
 
-void WriteBarrier::SharedSlow(RelocInfo* reloc_info, HeapObject value) {
+void WriteBarrier::SharedSlow(InstructionStream host, RelocInfo* reloc_info,
+                              HeapObject value) {
   MarkCompactCollector::RecordRelocSlotInfo info =
-      MarkCompactCollector::ProcessRelocInfo(reloc_info, value);
+      MarkCompactCollector::ProcessRelocInfo(host, reloc_info, value);
 
   base::MutexGuard write_scope(info.memory_chunk->mutex());
   RememberedSet<OLD_TO_SHARED>::InsertTyped(info.memory_chunk, info.slot_type,
@@ -131,7 +132,7 @@ int WriteBarrier::SharedMarkingFromCode(Address raw_host, Address raw_slot) {
 
 #if DEBUG
   Heap* heap = MemoryChunk::FromHeapObject(host)->heap();
-  DCHECK(heap->incremental_marking()->IsMarking());
+  DCHECK(heap->incremental_marking()->IsMajorMarking());
   Isolate* isolate = heap->isolate();
   DCHECK(isolate->is_shared_space_isolate());
 

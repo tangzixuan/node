@@ -98,6 +98,9 @@ class V8_EXPORT_PRIVATE RawMachineAssembler {
   Node* StackSlot(MachineRepresentation rep, int alignment = 0) {
     return AddNode(machine()->StackSlot(rep, alignment));
   }
+  Node* StackSlot(int size, int alignment) {
+    return AddNode(machine()->StackSlot(size, alignment));
+  }
   Node* Int64Constant(int64_t value) {
     return AddNode(common()->Int64Constant(value));
   }
@@ -189,11 +192,11 @@ class V8_EXPORT_PRIVATE RawMachineAssembler {
   void OptimizedStoreField(MachineRepresentation rep, Node* object, int offset,
                            Node* value, WriteBarrierKind write_barrier) {
     DCHECK(!IsMapOffsetConstantMinusTag(offset));
-    AddNode(simplified()->StoreField(FieldAccess(
-                BaseTaggedness::kTaggedBase, offset, MaybeHandle<Name>(),
-                MaybeHandle<Map>(), Type::Any(),
-                MachineType::TypeForRepresentation(rep), write_barrier,
-                "OptimizedStoreField")),
+    AddNode(simplified()->StoreField(
+                FieldAccess(BaseTaggedness::kTaggedBase, offset,
+                            MaybeHandle<Name>(), OptionalMapRef(), Type::Any(),
+                            MachineType::TypeForRepresentation(rep),
+                            write_barrier, "OptimizedStoreField")),
             object, value);
   }
   void OptimizedStoreMap(Node* object, Node* value,
@@ -950,6 +953,7 @@ class V8_EXPORT_PRIVATE RawMachineAssembler {
   // Parameters.
   Node* TargetParameter();
   Node* Parameter(size_t index);
+  Node* LoadRootRegister() { return AddNode(machine()->LoadRootRegister()); }
 
   // Pointer utilities.
   Node* LoadFromPointer(void* address, MachineType type, int32_t offset = 0) {

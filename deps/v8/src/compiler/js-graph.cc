@@ -44,11 +44,21 @@ Node* JSGraph::CEntryStubConstant(int result_size, ArgvMode argv_mode,
                                           builtin_exit_frame));
 }
 
-Node* JSGraph::Constant(const ObjectRef& ref, JSHeapBroker* broker) {
+Node* JSGraph::Constant(ObjectRef ref, JSHeapBroker* broker) {
   if (ref.IsSmi()) return Constant(ref.AsSmi());
   if (ref.IsHeapNumber()) {
     return Constant(ref.AsHeapNumber().value());
   }
+
+  switch (ref.AsHeapObject().GetHeapObjectType(broker).hole_type()) {
+    case HoleType::kNone:
+      break;
+    case HoleType::kGeneric:
+      return TheHoleConstant();
+    case HoleType::kPropertyCell:
+      return PropertyCellHoleConstant();
+  }
+
   OddballType oddball_type =
       ref.AsHeapObject().GetHeapObjectType(broker).oddball_type();
   ReadOnlyRoots roots(isolate());
@@ -58,9 +68,6 @@ Node* JSGraph::Constant(const ObjectRef& ref, JSHeapBroker* broker) {
   } else if (oddball_type == OddballType::kNull) {
     DCHECK(ref.object()->IsNull(roots));
     return NullConstant();
-  } else if (oddball_type == OddballType::kHole) {
-    DCHECK(ref.object()->IsTheHole(roots));
-    return TheHoleConstant();
   } else if (oddball_type == OddballType::kBoolean) {
     if (ref.object()->IsTrue(roots)) {
       return TrueConstant();
@@ -159,6 +166,9 @@ DEFINE_GETTER(StaleRegisterConstant, HeapConstant(factory()->stale_register()))
 DEFINE_GETTER(UndefinedConstant, HeapConstant(factory()->undefined_value()))
 
 DEFINE_GETTER(TheHoleConstant, HeapConstant(factory()->the_hole_value()))
+
+DEFINE_GETTER(PropertyCellHoleConstant,
+              HeapConstant(factory()->property_cell_hole_value()))
 
 DEFINE_GETTER(TrueConstant, HeapConstant(factory()->true_value()))
 

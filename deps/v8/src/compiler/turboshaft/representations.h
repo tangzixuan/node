@@ -70,7 +70,7 @@ class RegisterRepresentation {
     }
   }
 
-  constexpr bool IsWord() {
+  constexpr bool IsWord() const {
     switch (*this) {
       case Enum::kWord32:
       case Enum::kWord64:
@@ -83,7 +83,7 @@ class RegisterRepresentation {
     }
   }
 
-  constexpr bool IsFloat() {
+  constexpr bool IsFloat() const {
     switch (*this) {
       case Enum::kFloat32:
       case Enum::kFloat64:
@@ -194,6 +194,16 @@ V8_INLINE size_t hash_value(RegisterRepresentation rep) {
 }
 
 std::ostream& operator<<(std::ostream& os, RegisterRepresentation rep);
+
+template <>
+struct MultiSwitch<RegisterRepresentation> {
+  static constexpr uint64_t max_value = 8;
+  static constexpr uint64_t encode(RegisterRepresentation rep) {
+    const uint64_t value = static_cast<uint64_t>(rep.value());
+    DCHECK_LT(value, max_value);
+    return value;
+  }
+};
 
 class WordRepresentation : public RegisterRepresentation {
  public:
@@ -466,6 +476,24 @@ class MemoryRepresentation {
     }
   }
 
+  static MemoryRepresentation FromRegisterRepresentation(
+      RegisterRepresentation repr, bool is_signed) {
+    switch (repr) {
+      case RegisterRepresentation::Word32():
+        return is_signed ? Int32() : Uint32();
+      case RegisterRepresentation::Word64():
+        return is_signed ? Int64() : Uint64();
+      case RegisterRepresentation::Float32():
+        return Float32();
+      case RegisterRepresentation::Float64():
+        return Float64();
+      case RegisterRepresentation::Tagged():
+        return AnyTagged();
+      case RegisterRepresentation::Compressed():
+        UNREACHABLE();
+    }
+  }
+
   // The required register representation for storing a value. When pointer
   // compression is enabled, we only store the lower 32bit of a tagged value,
   // which we indicate as `RegisterRepresentation::Compressed()` here.
@@ -548,7 +576,7 @@ class MemoryRepresentation {
     }
   }
 
-  static MemoryRepresentation FromMachineRepresentation(
+  static constexpr MemoryRepresentation FromMachineRepresentation(
       MachineRepresentation rep) {
     switch (rep) {
       case MachineRepresentation::kWord8:

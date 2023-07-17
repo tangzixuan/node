@@ -79,6 +79,14 @@ consts_misc = [
         'value': 'LAST_CONTEXT_TYPE'
     },
     {
+        'name': 'FirstJSFunctionType',
+        'value': 'FIRST_JS_FUNCTION_TYPE'
+    },
+    {
+        'name': 'LastJSFunctionType',
+        'value': 'LAST_JS_FUNCTION_TYPE'
+    },
+    {
         'name': 'IsNotStringMask',
         'value': 'kIsNotStringMask'
     },
@@ -209,10 +217,6 @@ consts_misc = [
     {
         'name': 'OddballTrue',
         'value': 'Oddball::kTrue'
-    },
-    {
-        'name': 'OddballTheHole',
-        'value': 'Oddball::kTheHole'
     },
     {
         'name': 'OddballNull',
@@ -993,6 +997,8 @@ def emit_config():
   consts = [];
   for klassname in sorted(klasses):
     pklass = klasses[klassname]['parent'];
+    if (klassname == pklass):
+      continue
     bklass = get_base_class(klassname);
     if (bklass != 'Object'):
       continue;
