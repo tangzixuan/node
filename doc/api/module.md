@@ -81,13 +81,17 @@ added: v23.2.0
 * `base` {string|URL} The absolute location (`file:` URL string or FS path) of the
   containing  module. For CJS, use `__filename` (not `__dirname`!); for ESM, use
   `import.meta.url`. You do not need to pass it if `specifier` is an `absolute specifier`.
-* Returns: {string|undefined} A path if the `package.json` is found. When `startLocation`
+* Returns: {string|undefined} A path if the `package.json` is found. When `specifier`
   is a package, the package's root `package.json`; when a relative or unresolved, the closest
-  `package.json` to the `startLocation`.
+  `package.json` to the `specifier`.
 
-> **Caveat**: Do not use this to try to determine module format. There are many things effecting
+> **Caveat**: Do not use this to try to determine module format. There are many things affecting
 > that determination; the `type` field of package.json is the _least_ definitive (ex file extension
-> superceeds it, and a loader hook superceeds that).
+> supersedes it, and a loader hook supersedes that).
+
+> **Caveat**: This currently leverages only the built-in default resolver; if
+> [`resolve` customization hooks][resolve hook] are registered, they will not affect the resolution.
+> This may change in the future.
 
 ```text
 /path/to/project
@@ -219,7 +223,9 @@ See [Customization hooks][].
 ### `module.stripTypeScriptTypes(code[, options])`
 
 <!-- YAML
-added: v23.2.0
+added:
+  - v23.2.0
+  - v22.13.0
 -->
 
 > Stability: 1.1 - Active development
@@ -1030,13 +1036,14 @@ changes:
 * `nextResolve` {Function} The subsequent `resolve` hook in the chain, or the
   Node.js default `resolve` hook after the last user-supplied `resolve` hook
   * `specifier` {string}
-  * `context` {Object}
+  * `context` {Object|undefined} When omitted, the defaults are provided. When provided, defaults
+    are merged in with preference to the provided properties.
 * Returns: {Object|Promise} The asynchronous version takes either an object containing the
   following properties, or a `Promise` that will resolve to such an object. The
   synchronous version only accepts an object returned synchronously.
-  * `format` {string|null|undefined} A hint to the load hook (it might be
-    ignored)
-    `'builtin' | 'commonjs' | 'json' | 'module' | 'wasm'`
+  * `format` {string|null|undefined} A hint to the `load` hook (it might be ignored). It can be a
+    module format (such as `'commonjs'` or `'module'`) or an arbitrary value like `'css'` or
+    `'yaml'`.
   * `importAttributes` {Object|undefined} The import attributes to use when
     caching the module (optional; if excluded the input will be used)
   * `shortCircuit` {undefined|boolean} A signal that this hook intends to
@@ -1139,12 +1146,14 @@ changes:
 * `context` {Object}
   * `conditions` {string\[]} Export conditions of the relevant `package.json`
   * `format` {string|null|undefined} The format optionally supplied by the
-    `resolve` hook chain
+    `resolve` hook chain. This can be any string value as an input; input values do not need to
+    conform to the list of acceptable return values described below.
   * `importAttributes` {Object}
 * `nextLoad` {Function} The subsequent `load` hook in the chain, or the
   Node.js default `load` hook after the last user-supplied `load` hook
   * `url` {string}
-  * `context` {Object}
+  * `context` {Object|undefined} When omitted, defaults are provided. When provided, defaults are
+    merged in with preference to the provided properties.
 * Returns: {Object|Promise} The asynchronous version takes either an object containing the
   following properties, or a `Promise` that will resolve to such an object. The
   synchronous version only accepts an object returned synchronously.

@@ -2,7 +2,7 @@
 
 <!-- YAML
 changes:
-  - version: REPLACEME
+  - version: v23.6.0
     pr-url: https://github.com/nodejs/node/pull/56350
     description: Type stripping is enabled by default.
   - version: v22.7.0
@@ -156,10 +156,10 @@ import { fn, FnParams } from './fn.ts';
 
 ### Non-file forms of input
 
-Type stripping can be enabled for `--eval`. The module system
+Type stripping can be enabled for `--eval` and STDIN. The module system
 will be determined by `--input-type`, as it is for JavaScript.
 
-TypeScript syntax is unsupported in the REPL, STDIN input, `--print`, `--check`, and
+TypeScript syntax is unsupported in the REPL, `--check`, and
 `inspect`.
 
 ### Source maps
